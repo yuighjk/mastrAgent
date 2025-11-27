@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+
+# Build outputs
+.next/
+out/
+dist/
+
+# Env & secrets
+.env*
+id_rsa
+id_rsa.pub
+.next/
+.next/cache/
+.next/cache/webpack/
+.next/cache/webpack/**/*pack
+
+# Logs & caches
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.turbo
+
+# OS / Editor
+.DS_Store
+*.swp
