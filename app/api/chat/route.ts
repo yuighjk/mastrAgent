@@ -1,11 +1,61 @@
-import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { mastra } from "@src/mastra";
 import type { ChatMessage } from "@src/types/chat";
+
+export const runtime = "edge";
+
+const deepseekBaseUrl =
+  process.env.DEEPSEEK_API_BASE ?? "https://api.deepseek.com/v1";
+const deepseekModel = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+const deepseekTemperature = Number(process.env.DEEPSEEK_TEMPERATURE ?? 0.7);
+const deepseekMaxTokens = Number(process.env.DEEPSEEK_MAX_TOKENS ?? 800);
 
 type ChatPayload = {
   messages?: Array<Pick<ChatMessage, "id" | "role" | "content">>;
 };
+
+type DeepseekChoice = {
+  message?: { content?: string };
+};
+
+type DeepseekResponse = {
+  choices?: DeepseekChoice[];
+};
+
+async function generateAnswer(history: ChatMessage[]) {
+  if (!process.env.DEEPSEEK_API_KEY) {
+    throw new Error("缺少 DEEPSEEK_API_KEY");
+  }
+
+  const response = await fetch(`${deepseekBaseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: deepseekModel,
+      messages: history,
+      temperature: deepseekTemperature,
+      max_tokens: deepseekMaxTokens,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Deepseek API 请求失败（${response.status}）：${errorText}`,
+    );
+  }
+
+  const data = (await response.json()) as DeepseekResponse;
+  const text = data.choices?.[0]?.message?.content?.trim();
+
+  if (!text) {
+    throw new Error("Deepseek API 未返回有效内容");
+  }
+
+  return text;
+}
 
 export async function POST(request: Request) {
   try {
@@ -31,21 +81,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const agent = mastra.getAgent("chatAgent");
     const history = payload as ChatMessage[];
-
-    const response = await agent.generate(history, {
-      providerOptions: {
-        openai: { temperature: 0.7, maxTokens: 800 },
-      },
-    });
-
-    const answer =
-      response.text?.trim() ?? "抱歉，暂时没有生成有效的回答。";
+    const answer = await generateAnswer(history);
 
     return NextResponse.json({
       message: {
-        id: `assistant-${randomUUID()}`,
+        id: `assistant-${crypto.randomUUID()}`,
         role: "assistant",
         content: answer,
       },
