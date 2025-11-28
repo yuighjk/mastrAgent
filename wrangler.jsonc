@@ -1,8 +1,8 @@
 {
   "name": "mastr-agent-worker",
-  "main": ".vercel/output/static/_worker.js/index.js",
+  "main": ".open-next/worker.js",
   "compatibility_date": "2025-11-28",
   "assets": {
-    "directory": ".vercel/output/static"
+    "directory": ".open-next/assets"
   }
 }

@@ -8,7 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "chat": "tsx src/chat.ts"
+    "chat": "tsx src/chat.ts",
+    "cf:build": "opennextjs-cloudflare build",
+    "preview": "npm run cf:build && wrangler dev --config wrangler.jsonc",
+    "deploy": "npm run cf:build && wrangler deploy --config wrangler.jsonc"
   },
   "keywords": [],
   "author": "",
@@ -31,7 +34,7 @@
   "devDependencies": {
     "@types/node": "^24.10.1",
     "eslint-config-next": "15.5.2",
-    "@cloudflare/next-on-pages": "^1.13.16",
+    "@opennextjs/cloudflare": "^1.14.0",
     "wrangler": "^4.51.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"

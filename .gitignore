@@ -14,6 +14,7 @@ id_rsa.pub
 .next/cache/
 .next/cache/webpack/
 .next/cache/webpack/**/*pack
+.open-next/
 
 # Logs & caches
 npm-debug.log*

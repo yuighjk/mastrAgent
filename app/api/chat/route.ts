@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import type { ChatMessage } from "@src/types/chat";
 
-export const runtime = "edge";
-
 const deepseekBaseUrl =
   process.env.DEEPSEEK_API_BASE ?? "https://api.deepseek.com/v1";
 const deepseekModel = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
