@@ -1,5 +1,5 @@
 {
-  "name": "mastr-agent-worker",
+  "name": "mastraagent",
   "main": ".open-next/worker.js",
   "compatibility_date": "2025-11-28",
   "compatibility_flags": ["nodejs_compat"],
