@@ -1,11 +1,29 @@
 import { NextResponse } from "next/server";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { ChatMessage } from "@src/types/chat";
 
-const deepseekBaseUrl =
-  process.env.DEEPSEEK_API_BASE ?? "https://api.deepseek.com/v1";
-const deepseekModel = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
-const deepseekTemperature = Number(process.env.DEEPSEEK_TEMPERATURE ?? 0.7);
-const deepseekMaxTokens = Number(process.env.DEEPSEEK_MAX_TOKENS ?? 800);
+type CloudflareBindings = Record<string, string | undefined>;
+
+const getCfBindings = (): CloudflareBindings => {
+  try {
+    return (getCloudflareContext().env as CloudflareBindings) ?? {};
+  } catch {
+    // getCloudflareContext 在本地构建或 CLI 中可能不可用
+    return {};
+  }
+};
+
+const getEnv = (name: string): string | undefined => {
+  return process.env[name] ?? getCfBindings()[name];
+};
+
+const getDeepseekConfig = () => ({
+  apiKey: getEnv("DEEPSEEK_API_KEY"),
+  baseUrl: getEnv("DEEPSEEK_API_BASE") ?? "https://api.deepseek.com/v1",
+  model: getEnv("DEEPSEEK_MODEL") ?? "deepseek-chat",
+  temperature: Number(getEnv("DEEPSEEK_TEMPERATURE") ?? 0.7),
+  maxTokens: Number(getEnv("DEEPSEEK_MAX_TOKENS") ?? 800),
+});
 
 type ChatPayload = {
   messages?: Array<Pick<ChatMessage, "id" | "role" | "content">>;
@@ -20,21 +38,23 @@ type DeepseekResponse = {
 };
 
 async function generateAnswer(history: ChatMessage[]) {
-  if (!process.env.DEEPSEEK_API_KEY) {
+  const { apiKey, baseUrl, model, temperature, maxTokens } =
+    getDeepseekConfig();
+  if (!apiKey) {
     throw new Error("缺少 DEEPSEEK_API_KEY");
   }
 
-  const response = await fetch(`${deepseekBaseUrl}/chat/completions`, {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: deepseekModel,
+      model,
       messages: history,
-      temperature: deepseekTemperature,
-      max_tokens: deepseekMaxTokens,
+      temperature,
+      max_tokens: maxTokens,
     }),
   });
 
@@ -72,7 +92,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!process.env.DEEPSEEK_API_KEY) {
+    if (!getDeepseekConfig().apiKey) {
       return NextResponse.json(
         { error: "缺少 DEEPSEEK_API_KEY，请先在 .env 中配置。" },
         { status: 500 },
